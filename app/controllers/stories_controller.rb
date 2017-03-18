@@ -1,5 +1,7 @@
 class StoriesController < ApplicationController
   before_action :set_story, only: [:show, :edit, :update, :destroy]
+  before_action :authenticate_user!, except: [:index, :show]
+  before_action :authorized_user, only: [:edit, :update, :destroy]
 
   # GET /stories
   # GET /stories.json
@@ -14,7 +16,7 @@ class StoriesController < ApplicationController
 
   # GET /stories/new
   def new
-    @story = Story.new
+    @story = current_user.stories.build
   end
 
   # GET /stories/1/edit
@@ -24,11 +26,11 @@ class StoriesController < ApplicationController
   # POST /stories
   # POST /stories.json
   def create
-    @story = Story.new(story_params)
+    @story = current_user.stories.build(story_params)
 
     respond_to do |format|
       if @story.save
-        format.html { redirect_to @story, notice: 'Story was successfully created.' }
+        format.html { redirect_to @story, notice: 'The story is ready for review.' }
         format.json { render :show, status: :created, location: @story }
       else
         format.html { render :new }
@@ -56,9 +58,21 @@ class StoriesController < ApplicationController
   def destroy
     @story.destroy
     respond_to do |format|
-      format.html { redirect_to stories_url, notice: 'Story was successfully destroyed.' }
+      format.html { redirect_to stories_url, notice: 'Story was successfully deleted.' }
       format.json { head :no_content }
     end
+  end
+
+  def upvote
+    @story = Story.find(params[:id])
+    @story.upvote_by current_user
+    redirect_to :back
+  end
+
+  def downvote
+    @story = Story.find(params[:id])
+    @story.downvote_from current_user
+    redirect_to :back
   end
 
   private
@@ -67,8 +81,13 @@ class StoriesController < ApplicationController
       @story = Story.find(params[:id])
     end
 
+    def authorized_user
+      @story = current_user.stories.find_by(id: params[:id])
+      redirect_to stories_path, notice: "Not authorized to edit this story" if @story.nil?
+    end
+
     # Never trust parameters from the scary internet, only allow the white list through.
     def story_params
-      params.require(:story).permit(:title, :url, :summary)
+      params.require(:story).permit(:title, :url)
     end
 end
