@@ -1,19 +1,46 @@
-<p id="notice"><%= notice %></p>
+<div class="page-header">
+  <h1><a href="<%= @story.url %>"><%= @story.title %></a><br> <small>Submitted by <%= @story.user.name %></small></h1>
+</div>
 
-<p>
-  <strong>Title:</strong>
-  <%= @story.title %>
-</p>
+<div class="btn-group">
+	<%= link_to 'Visit URL', @story.url, class: "btn btn-primary" %>
+</div>
 
-<p>
-  <strong>Url:</strong>
-  <%= @story.url %>
-</p>
-
-<p>
-  <strong>Summary:</strong>
+<div <strong>Summary:</strong>
   <%= @story.summary %>
-</p>
+</div>
 
-<%= link_to 'Edit', edit_story_path(@story) %> |
-<%= link_to 'Back', stories_path %>
+<div class="btn-group pull-right">
+  <%= link_to like_story_path(@story), method: :put, class: "btn btn-default btn-sm" do %>
+    <span class="glyphicon glyphicon-chevron-up"></span>
+    Upvote
+    <%= @story.get_upvotes.size %>
+  <% end %>
+  <%= link_to dislike_story_path(@story), method: :put, class: "btn btn-default btn-sm" do %>
+    <span class="glyphicon glyphicon-chevron-down">
+    Downvote
+    <%= @story.get_downvotes.size %>
+  <% end %>
+</div>
+
+<% if @story.user == current_user -%>
+	<div class="btn-group">
+		<%= link_to 'Edit', edit_story_path(@story), class: "btn btn-default" %>
+		<%= link_to 'Destroy', @story, method: :delete, data: { confirm: 'Are you sure?' }, class: "btn btn-default" %>
+	</div>
+<% end %>
+
+<h3 class="comments_title">
+  <%= @story.comments.count %> Comments
+</h3>
+
+<div id="comments">
+  <%= render :partial => @story.comments %>
+</div>
+<%= simple_form_for [@story, Comment.new]  do |f| %>
+  <div class="field">
+    <%= f.text_area :body, class: "form-control" %>
+  </div>
+  <br>
+  <%= f.submit "Add Comment", class: "btn btn-primary" %>
+<% end %>
